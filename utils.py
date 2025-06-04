@@ -11,8 +11,8 @@ def extract_features_from_audio(audio_file):
             tmp_file.write(audio_file.read())
             tmp_file_path = tmp_file.name
         
-        # 오디오 로드 (3초간)
-        y, sr = librosa.load(tmp_file_path, duration=3.0)
+        # 오디오 로드 (1간)
+       y, sr = librosa.load(tmp_file_path, sr=None, duration=60)
         
         # 임시 파일 삭제
         os.unlink(tmp_file_path)
