@@ -1,6 +1,5 @@
 import streamlit as st
 import joblib
-import xgboost as xgb
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -100,3 +99,86 @@ def main():
         - 10개 장르 분류
         - 57개 오디오 특징 사용
         - XGBoost 모델
+        - 정확도: 89.24%
+        """)
+        
+        st.subheader("🎯 지원 장르")
+        genres = label_encoder.classes_
+        for genre in genres:
+            st.write(f"• {genre}")
+    
+    # 메인 컨텐츠
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.subheader("🎼 오디오 파일 업로드")
+        uploaded_file = st.file_uploader(
+            "음악 파일을 업로드하세요",
+            type=['wav', 'mp3', 'flac', 'm4a'],
+            help="지원 형식: WAV, MP3, FLAC, M4A"
+        )
+        
+        if uploaded_file is not None:
+            # 오디오 플레이어
+            st.audio(uploaded_file, format='audio/wav')
+            
+            # 예측 버튼
+            if st.button("🔮 장르 예측하기", type="primary"):
+                with st.spinner("음악을 분석하는 중..."):
+                    predicted_genre, probabilities = predict_genre(
+                        uploaded_file, model, scaler, label_encoder, feature_cols
+                    )
+                
+                if predicted_genre:
+                    st.success(f"🎵 예측된 장르: **{predicted_genre.upper()}**")
+                    
+                    # 확률 분포 표시
+                    with col2:
+                        st.subheader("📈 장르별 확률 분포")
+                        
+                        if probabilities is not None and len(probabilities) == len(label_encoder.classes_):
+                            prob_df = pd.DataFrame({
+                                'Genre': label_encoder.classes_,
+                                'Probability': probabilities
+                            }).sort_values('Probability', ascending=True)
+                            
+                            # 확률 차트
+                            fig, ax = plt.subplots(figsize=(10, 6))
+                            bars = ax.barh(prob_df['Genre'], prob_df['Probability'])
+                            
+                            # 예측된 장르 강조
+                            for i, bar in enumerate(bars):
+                                if prob_df.iloc[i]['Genre'] == predicted_genre:
+                                    bar.set_color('#FF6B6B')
+                                else:
+                                    bar.set_color('#4ECDC4')
+                            
+                            ax.set_xlabel('확률')
+                            ax.set_title('장르별 예측 확률')
+                            ax.grid(axis='x', alpha=0.3)
+                            
+                            st.pyplot(fig)
+                            
+                            # 상위 3개 장르 표시
+                            st.subheader("🏆 상위 3개 예측")
+                            top3 = prob_df.tail(3)
+                            for idx, row in top3.iterrows():
+                                st.write(f"{row['Genre']}: {row['Probability']:.2%}")
+                        else:
+                            st.warning("확률 분포를 표시할 수 없습니다.")
+                else:
+                    st.error("음악 분석에 실패했습니다. 다른 파일을 시도해보세요.")
+    
+    # 하단 정보
+    st.markdown("---")
+    st.markdown("""
+    ### 📝 사용법
+    1. 왼쪽에서 음악 파일을 업로드하세요
+    2. '장르 예측하기' 버튼을 클릭하세요
+    3. 예측 결과와 확률 분포를 확인하세요
+    
+    **지원하는 장르**: blues, classical, country, disco, hiphop, jazz, metal, pop, reggae, rock
+    """)
+
+if __name__ == "__main__":
+    main()
