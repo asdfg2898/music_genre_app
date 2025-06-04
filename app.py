@@ -134,7 +134,7 @@ def main():
                     
                     # 확률 분포 표시
                     with col2:
-                        st.subheader("📈 장르별 확률 분포")
+                        st.subheader("📈 Genre Probability Distribution")
                         
                         if probabilities is not None and len(probabilities) == len(label_encoder.classes_):
                             prob_df = pd.DataFrame({
